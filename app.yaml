@@ -1,0 +1,4 @@
+runtime: nodejs
+env: flex
+beta_settings:
+  cloud_sql_instances: i-agility-269318:europe-west1:my-vault-db

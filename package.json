@@ -1,0 +1,21 @@
+{
+  "name": "postgres_db_connection",
+  "version": "1.0.0",
+  "description": "This API connection helps the My Vault app and My Vault web portal to connect to the central PostgreSQL database hosted on GCloud.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx nodemon server.js -w server"
+  },
+  "engines": {
+    "node": "12.x.x"
+  },
+  "author": "Luke Bezzina | UOM UG student",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "pg": "^7.18.2"
+  }
+}
