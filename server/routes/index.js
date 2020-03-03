@@ -13,9 +13,12 @@ router.use(
 );
 
 router.get('/', (request, response) => {
-  response.json({ info: 'Node.js, Express, and Postgres API' });
+  response.json({ info: 'API  for MyVault App.' });
 });
 
+router
+
 router.get('/users', db.getUsers);
+router.post('/users', db.createUsers);
 
 module.exports = router;
