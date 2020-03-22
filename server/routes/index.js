@@ -32,7 +32,7 @@ router.post('/login', dbUsers.performLogin);
 router.delete('/users', auth, dbUsers.deleteUsers);
 
 //expenselist requests
-router.get('/expenses/:userid', auth, dbExpenses.getExpensesByUser); 
+router.get('/expenses/', auth, dbExpenses.getExpensesByUser); 
 router.get('/expenses/w/:userid', auth, dbExpenses.getExpensesByUserPerWeek); 
 router.get('/expenses/m/:userid', auth, dbExpenses.getExpensesByUserPerMonth); 
 router.get('/expenses/y/:userid', auth, dbExpenses.getExpensesByUserPerYear); 

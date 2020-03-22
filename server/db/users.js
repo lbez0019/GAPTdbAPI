@@ -16,9 +16,10 @@ const getUsers = (request, response) => { //assigning anonymous function to cons
       response.status(400);
       response.json({ message });
     }
-    users = results.rows;
+    var success = '1';
+    output = results.rows;
     response.set('Content-Type', 'application/json');
-    response.status(200).json({ users });
+    response.status(200).json({ success,output });
   })
 }
 
@@ -31,9 +32,10 @@ const getUserByEmail = (request, response) => {
       response.status(400);
       response.json({ message });
     }
-    users = results.rows;
+    var success = '1';
+    output = results.rows;
     response.set('Content-Type', 'application/json');
-    response.status(200).json({ users });
+    response.status(200).json({ success,output });
   })
 }
 
@@ -48,9 +50,10 @@ const deleteUsers = (request, response) => {
         response.status(400);
         response.json({ message });
       }
-      var message = `Account deleted.`;
+      var success = '1';
+      var output = `Account deleted.`;
       response.status(200);
-      response.json({ message });
+      response.json({ success,output });
     })
 }
 
@@ -67,9 +70,10 @@ const createUsers = (request, response) => {
         response.status(409);
         response.json({ message });
       }
-      var message = `User registered!`;
+      var success = '1';
+      var output = `User registered!`;
       response.status(201);
-      response.json({ message });
+      response.json({ success,output });
     })
 }
 
