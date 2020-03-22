@@ -1,0 +1,8 @@
+dispatch:
+  # Send all mobile traffic to the mobile frontend.
+  - url: "*/api/*"
+    service: default
+
+  # Send all work to the one static backend.
+  - url: "*/*"
+    service: web-app
