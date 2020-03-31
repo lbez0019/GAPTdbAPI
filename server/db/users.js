@@ -24,9 +24,11 @@ const getUsers = (request, response) => { //assigning anonymous function to cons
 }
 
 // returning specific record from userlist 
-const getUserByEmail = (request, response) => {
-  const email = request.params.email;
-  client.query('SELECT * FROM userlist WHERE email = $1', [email], (err, results) => {
+const getUserDetails = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT * FROM userlist WHERE email = $1', [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get user.`;
       response.status(400);
@@ -126,4 +128,4 @@ const performLogin = (request, response) => {
 
 
 
-module.exports = { getUsers, getUserByEmail, createUsers, deleteUsers, performLogin };
+module.exports = { getUsers, getUserDetails, createUsers, deleteUsers, performLogin };
