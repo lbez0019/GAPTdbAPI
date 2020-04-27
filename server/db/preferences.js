@@ -23,24 +23,29 @@ const getPreferencesByUser = (request, response) => {
   const userid = tokenDecode(token).result.userid;
 
   client.query('SELECT * FROM preferenceslist WHERE userid = $1', [userid], (err, results) => {
-    if (err) {
-      var message = `Error! Cannot get preferences.`;
-      response.status(400);
-      response.json({ message });
-    }
     var success = '1';
-    
 
-    if (results.rows.length > 0){
-        output = results.rows;
-        response.status(200).json({ success, output });
+    if (results.rows.length > 0) {
+      output = results.rows;
+      response.status(200).json({ success, output });
+      return;
     }
-    else{
-        client.query('INSERT INTO preferenceslist(userid) VALUES ($1)', [userid], (err, results) => {
-            output = results.rows;
-            response.status(200).json({ success, output });
-        })
-    }
+
+    client.query('INSERT INTO preferenceslist(userid) VALUES ($1)', [userid], (err, results) => {
+      client.query('SELECT * FROM preferenceslist WHERE userid = $1', [userid], (err, results) => {
+        if (!err) {
+          output = results.rows;
+          response.status(200).json({ success, output });
+          return;
+        }
+        else {
+          console.log(err);
+          var message = `Error! Cannot create preferences.`;
+          response.status(400);
+          response.json({ message });
+        }
+      })
+    })
   })
 }
 
@@ -51,15 +56,15 @@ const updatePreferencesByUser = (request, response) => {
   obj = request.body;  // variable obj is initialised as the JSON body of the POST request
 
   client.query('UPDATE preferenceslist SET dark= $1, colour= $2 WHERE userid=$3', [obj.dark, obj.colour, userid], (err, results) => {
-      if (err) {
-        var message = `Error while updating preference`;
-        response.status(404).json({message});
-      }
-      var success = '1';
-      var output = `Preferences updated!`;
-      response.status(200).json({success, output});
-      return success;
-    })
+    if (err) {
+      var message = `Error while updating preference`;
+      response.status(404).json({ message });
+    }
+    var success = '1';
+    var output = `Preferences updated!`;
+    response.status(200).json({ success, output });
+    return success;
+  })
 }
 
 

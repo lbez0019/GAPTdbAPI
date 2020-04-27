@@ -6,6 +6,7 @@ const db = require ('../db');
 const dbUsers = require ('../db/users');
 const dbExpenses = require ('../db/expenses');
 const dbPreferences = require ('../db/preferences');
+const dbAnalytics = require ('../db/analytics');
 
 const auth = require('../authentication/token-verification')
 const bodyParser = require('body-parser');
@@ -32,6 +33,7 @@ router.get('/users', auth, dbUsers.getUsers);
 router.get('/users/details', auth, dbUsers.getUserDetails); 
 router.post('/users', dbUsers.createUsers);
 router.post('/login', dbUsers.performLogin);
+router.put('/users/update', dbUsers.updateUsers);
 router.delete('/users', auth, dbUsers.deleteUsers);
 
 //expenselist requests
@@ -45,6 +47,16 @@ router.delete('/expenses/del/:expenseid', auth, dbExpenses.deleteExpense);
 //preferenceslist requests
 router.get('/pref', auth, dbPreferences.getPreferencesByUser); 
 router.put('/pref', auth, dbPreferences.updatePreferencesByUser); 
+
+//analytics requests
+router.get('/analytics/CategoryTotals', auth, dbAnalytics.getExpensesByCategory); 
+router.get('/analytics/CategoryTotals/w/', auth, dbAnalytics.getExpensesByCategoryPerWeek); 
+router.get('/analytics/CategoryTotals/m/', auth, dbAnalytics.getExpensesByCategoryPerMonth); 
+router.get('/analytics/CategoryTotals/y/', auth, dbAnalytics.getExpensesByCategoryPerYear); 
+router.get('/analytics/MonthlyTotals', auth, dbAnalytics.getMonthlyExpenses); 
+router.get('/analytics/CurrencyTotals', auth, dbAnalytics.getExpensesByCurrency); 
+
+
 
 
 module.exports = router;
