@@ -23,7 +23,7 @@ const getExpensesByCategory = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 GROUP BY exp."expenseType", cat.color',
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionCurrency" = \'eur\' GROUP BY exp."expenseType", cat.color',
    [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
@@ -42,7 +42,7 @@ const getExpensesByCategoryPerWeek = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionDate" >= (current_date - 7) and "transactionDate" <= (current_date) GROUP BY exp."expenseType", cat.color ',
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionDate" >= (current_date - 7) and "transactionDate" <= (current_date) and "transactionCurrency" = \'eur\' GROUP BY exp."expenseType", cat.color ',
    [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
@@ -60,7 +60,7 @@ const getExpensesByCategoryPerMonth = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionDate" >= date_trunc(\'month\', current_date - interval \'1 month\') and "transactionDate" <= (current_date) GROUP BY exp."expenseType", cat.color ',
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionDate" >= date_trunc(\'month\', current_date - interval \'1 month\') and "transactionDate" <= (current_date) and "transactionCurrency" = \'eur\' GROUP BY exp."expenseType", cat.color ',
    [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
@@ -78,7 +78,153 @@ const getExpensesByCategoryPerYear = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1  and "transactionDate" >= date_trunc(\'year\', current_date - interval \'1 year\') and "transactionDate" <= (current_date) GROUP BY exp."expenseType", cat.color' ,
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1  and "transactionDate" >= date_trunc(\'year\', current_date - interval \'1 year\') and "transactionDate" <= (current_date) and "transactionCurrency" = \'eur\' GROUP BY exp."expenseType", cat.color' ,
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    pieData = results.rows;
+    response.status(200).json({ success, pieData });
+  })
+}
+
+// returning expenses per category
+const getExpensesByCategoryUSD = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionCurrency" = \'usd\' GROUP BY exp."expenseType", cat.color',
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    pieData = results.rows;
+    console.log(pieData);
+    response.status(200).json({ success, pieData});
+  })
+}
+
+// returning expenses per category
+const getExpensesByCategoryPerWeekUSD = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionDate" >= (current_date - 7) and "transactionDate" <= (current_date) and "transactionCurrency" = \'usd\' GROUP BY exp."expenseType", cat.color ',
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    pieData = results.rows;
+    response.status(200).json({ success, pieData });
+  })
+}
+
+// returning expenses per category
+const getExpensesByCategoryPerMonthUSD = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionDate" >= date_trunc(\'month\', current_date - interval \'1 month\') and "transactionDate" <= (current_date) and "transactionCurrency" = \'usd\' GROUP BY exp."expenseType", cat.color ',
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    pieData = results.rows;
+    response.status(200).json({ success, pieData });
+  })
+}
+
+// returning expenses per category
+const getExpensesByCategoryPerYearUSD = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1  and "transactionDate" >= date_trunc(\'year\', current_date - interval \'1 year\') and "transactionDate" <= (current_date) and "transactionCurrency" = \'usd\' GROUP BY exp."expenseType", cat.color' ,
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    pieData = results.rows;
+    response.status(200).json({ success, pieData });
+  })
+}
+
+// returning expenses per category
+const getExpensesByCategoryGBP = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionCurrency" = \'gbp\' GROUP BY exp."expenseType", cat.color',
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    pieData = results.rows;
+    console.log(pieData);
+    response.status(200).json({ success, pieData});
+  })
+}
+
+// returning expenses per category
+const getExpensesByCategoryPerWeekGBP = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionDate" >= (current_date - 7) and "transactionDate" <= (current_date) and "transactionCurrency" = \'gbp\' GROUP BY exp."expenseType", cat.color ',
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    pieData = results.rows;
+    response.status(200).json({ success, pieData });
+  })
+}
+
+// returning expenses per category
+const getExpensesByCategoryPerMonthGBP = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1 and "transactionDate" >= date_trunc(\'month\', current_date - interval \'1 month\') and "transactionDate" <= (current_date) and "transactionCurrency" = \'gbp\' GROUP BY exp."expenseType", cat.color ',
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    pieData = results.rows;
+    response.status(200).json({ success, pieData });
+  })
+}
+
+// returning expenses per category
+const getExpensesByCategoryPerYearGBP = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT "expenseType" AS name, CAST(SUM("expenseCost") AS INT) AS population, cat.color, \'black\' AS "legendFontColor", 15 AS "legendFontSize" FROM expenselist AS exp INNER JOIN categorylist AS cat ON (exp."expenseType" = cat."category") WHERE userid = $1  and "transactionDate" >= date_trunc(\'year\', current_date - interval \'1 year\') and "transactionDate" <= (current_date) and "transactionCurrency" = \'gbp\' GROUP BY exp."expenseType", cat.color' ,
    [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
@@ -96,7 +242,7 @@ const getMonthlyExpenses = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query('SELECT COALESCE(SUM(exp."expenseCost"),0) as data FROM generate_series (1,12,1) as tme(i) LEFT OUTER JOIN expenselist exp ON (tme.i = EXTRACT(MONTH FROM (exp."transactionDate"))) AND userid = $1 AND "transactionDate" >= date_trunc(\'year\', current_date - interval \'1 year\') AND "transactionDate" <= (current_date) GROUP BY tme.i ORDER BY tme.i',
+  client.query('SELECT COALESCE(SUM(exp."expenseCost"),0) as data FROM generate_series (1,EXTRACT(MONTH FROM(CURRENT_DATE))::INT ,1) as tme(i) LEFT OUTER JOIN expenselist exp ON (tme.i = EXTRACT(MONTH FROM (exp."transactionDate"))) AND userid = $1 AND "transactionDate" >= date_trunc(\'year\', current_date - interval \'1 year\') AND "transactionDate" <= (current_date) AND "transactionCurrency" = \'eur\' GROUP BY tme.i ORDER BY tme.i',
    [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
@@ -105,10 +251,52 @@ const getMonthlyExpenses = (request, response) => {
     }
     var success = '1';
     datasets = results.rows;
+    size = results.rows.length;
     console.log(datasets);
-    response.status(200).json({ success, datasets});
+    response.status(200).json({ success, size, datasets});
   })
 }
+
+// returning expenses per category
+const getMonthlyExpensesUSD = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT COALESCE(SUM(exp."expenseCost"),0) as data FROM generate_series (1,EXTRACT(MONTH FROM(CURRENT_DATE))::INT ,1) as tme(i) LEFT OUTER JOIN expenselist exp ON (tme.i = EXTRACT(MONTH FROM (exp."transactionDate"))) AND userid = $1 AND "transactionDate" >= date_trunc(\'year\', current_date - interval \'1 year\') AND "transactionDate" <= (current_date) AND "transactionCurrency" = \'usd\' GROUP BY tme.i ORDER BY tme.i',
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    datasets = results.rows;
+    size = results.rows.length;
+    console.log(datasets);
+    response.status(200).json({ success, size, datasets});
+  })
+}
+
+// returning expenses per category
+const getMonthlyExpensesGBP = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT COALESCE(SUM(exp."expenseCost"),0) as data FROM generate_series (1,EXTRACT(MONTH FROM(CURRENT_DATE))::INT ,1) as tme(i) LEFT OUTER JOIN expenselist exp ON (tme.i = EXTRACT(MONTH FROM (exp."transactionDate"))) AND userid = $1 AND "transactionDate" >= date_trunc(\'year\', current_date - interval \'1 year\') AND "transactionDate" <= (current_date) AND "transactionCurrency" = \'gbp\' GROUP BY tme.i ORDER BY tme.i',
+   [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    datasets = results.rows;
+    size = results.rows.length;
+    console.log(datasets);
+    response.status(200).json({ success, size, datasets});
+  })
+}
+
 
 // returning expenses per category
 const getExpensesByCurrency = (request, response) => {
@@ -127,4 +315,4 @@ const getExpensesByCurrency = (request, response) => {
   })
 }
 
-module.exports = { getExpensesByCategory, getExpensesByCategoryPerWeek, getExpensesByCategoryPerMonth, getExpensesByCategoryPerYear, getMonthlyExpenses, getExpensesByCurrency }
+module.exports = { getExpensesByCategory, getExpensesByCategoryPerWeek, getExpensesByCategoryPerMonth, getExpensesByCategoryPerYear, getExpensesByCategoryUSD, getExpensesByCategoryPerWeekUSD, getExpensesByCategoryPerMonthUSD, getExpensesByCategoryPerYearUSD, getExpensesByCategoryGBP, getExpensesByCategoryPerWeekGBP, getExpensesByCategoryPerMonthGBP, getExpensesByCategoryPerYearGBP, getMonthlyExpenses, getMonthlyExpensesUSD,getMonthlyExpensesGBP, getExpensesByCurrency }

@@ -52,10 +52,12 @@ const getUserDetails = (request, response) => {
 
 // deleting records from userlist 
 const deleteUsers = (request, response) => {
-  obj = request.body;  // variable obj is initialised as the JSON body of the POST request
+  
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
 
-  client.query('DELETE FROM userlist WHERE username = $1',
-    [obj.username], (err, results) => {
+  client.query('DELETE FROM userlist WHERE userid = $1',
+    [userid], (err, results) => {
       if (err) {
         var message = `Error! Account not deleted.`;
         response.status(400);
