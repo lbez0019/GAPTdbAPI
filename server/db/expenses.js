@@ -1,6 +1,7 @@
 require('dotenv').config();  //module loading environment variables from .env file
 const bodyParser = require('body-parser');
 const express = require('express')
+const datejs = require('datejs');
 const app = express();
 const bcrypt = require('bcrypt');
 const { sign } = require("jsonwebtoken");
@@ -10,7 +11,7 @@ global.atob = require("atob");
 
 const client = require('../db');
 
-Date.prototype.addDays = function(days) {
+Date.prototype.addDays = function (days) {
   var date = new Date(this.valueOf());
   date.setDate(date.getDate() + days);
   return date;
@@ -27,9 +28,9 @@ function tokenDecode(token) {  // decoding JWT token to obtain JSON data
 const periodicExpenseTrigger = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
-  var new_trans_date ;
+  var new_trans_date;
 
-  client.query('SELECT periodicid, lasttransdate, transactioncurrency, transactiontitle, expensecost, expensetype, count FROM periodicexpenselist WHERE userid = $1 AND lasttransdate <= (current_date) ORDER BY periodicid ASC', [userid], (err, results) => {
+  client.query('SELECT periodicid, lasttransdate, transactioncurrency, transactiontitle, expensecost, expensetype, interval FROM periodicexpenselist WHERE userid = $1 AND lasttransdate <= (current_date) ORDER BY periodicid ASC', [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
       response.status(400);
@@ -38,44 +39,66 @@ const periodicExpenseTrigger = (request, response) => {
     }
     var success = '1';
     var output = results.rows;
+    console.log(output);
 
     var i;
 
-    for (i=0; i<output.length; i++){
+    for (i = 0; i < output.length; i++) {
       var trans_date = output[i].lasttransdate; //transaction date
+      var new_trans_date = trans_date;
       var now = new Date(); //current date
       var diff = Math.floor((now - trans_date) / (1000 * 60 * 60 * 24)); //difference between now and transaction date in DAYS
-      var no_of_expenses = Math.floor(diff / 30); //monthly expenses - we have to add one per month 
-      new_trans_date = trans_date.addDays(30);
-
-      console.log(trans_date);
-      console.log("test:"+(trans_date.addDays(30)));
-      console.log(no_of_expenses);
+      var no_of_expenses = Math.floor(diff / 30); //monthly expenses - we have to add one per month
 
       var j = 0
 
-      for (j=0; j<no_of_expenses; j++){
-        new_trans_date = new_trans_date.addDays(j * 30);
-        client.query('INSERT INTO expenselist (userid, "transactionPlace", "expenseType", "expenseCost", "transactionCurrency", "transactionTitle", "transactionOnline", "transactionDate") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ', [userid, "Periodic", output[i].expensetype, output[i].expensecost, output[i].transactioncurrency, output[i].transactiontitle, 'false', new_trans_date], (err, results) => {
+      var intervalArray = output[i].interval.split(" ");
+
+      for (j = 1; j <= no_of_expenses; j++) {
+
+        if (intervalArray[1].includes("month")) {
+          var x = intervalArray[0];
+          new_trans_date = (Date.parse(trans_date).add(x * j).month())
+          //console.log(new_trans_date);
+        }
+        else if (intervalArray[1].includes("week")) {
+          var x = intervalArray[0];
+          new_trans_date = (Date.parse(trans_date).add(x * j).week())
+          //console.log(new_trans_date);
+        }
+        else if (intervalArray[1].includes("day")) {
+          var x = intervalArray[0];
+          new_trans_date = (Date.parse(trans_date).add(x * j).day())
+          //console.log(new_trans_date);
+        }
+        else if (intervalArray[1].includes("year")) {
+          var x = intervalArray[0];
+          new_trans_date = (Date.parse(trans_date).add(x * j).year())
+          //console.log(new_trans_date);
+        }
+
+        client.query("INSERT INTO expenselist (userid, \"transactionPlace\", \"expenseType\", \"expenseCost\", \"transactionCurrency\", \"transactionTitle\", \"transactionOnline\", \"transactionDate\") VALUES ($1, $2, $3, $4, $5, $6, $7, date($8) )", [userid, "Periodic", output[i].expensetype, output[i].expensecost, output[i].transactioncurrency, output[i].transactiontitle, 'false', new_trans_date], (err, results) => {
           if (err) {
+            console.log(err);
             var message = `Error! Cannot get transactions.`;
             response.status(400);
             response.json({ message });
             return;
           }
-          
+
         })
       }
 
-      client.query('UPDATE periodicexpenselist SET count= $1, lasttransdate=$2 WHERE periodicid=$3;', [output[i].count, new_trans_date, output[i].periodicid], (err, results) => {
+      client.query('UPDATE periodicexpenselist SET lasttransdate=$1 WHERE periodicid=$2;', [new_trans_date, output[i].periodicid], (err, results) => {
         if (err) {
+          console.log(err);
           var message = `Error! Cannot get transactions.`;
           response.status(400);
           response.json({ message });
           return;
         }
       })
-    }  
+    }
     output = 'Periodic expenses - ok';
     response.status(200).json({ success, output });
   })
@@ -86,7 +109,7 @@ const getExpensesByUser = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query('SELECT * FROM expenselist WHERE userid = $1 ORDER BY "transactionDate" DESC', [userid], (err, results) => {
+  client.query('SELECT * FROM expenselist WHERE userid = $1 and "transactionDate" <= (current_date) ORDER BY "transactionDate" DESC', [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
       response.status(400);
@@ -149,6 +172,43 @@ const getExpensesByUserPerYear = (request, response) => {
   })
 }
 
+// returning all periodic expense records from periodicexpenselist for 1 user
+const getPeriodicExpensesByUser = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+
+  client.query('SELECT periodicid, transactiontitle, transactioncurrency, expensecost, expensetype, interval FROM periodicexpenselist WHERE userid = $1 ORDER BY "transactionDate" DESC', [userid], (err, results) => {
+    if (err) {
+      var message = `Error! Cannot get periodic transactions.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    output = results.rows;
+    response.status(200).json({ success, output });
+  })
+}
+
+// updating records from expenselist 
+const editPeriodicExpense = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+  const periodicid = request.params.periodicid;
+  obj = request.body;  // variable obj is initialised as the JSON body of the POST request
+
+  client.query('UPDATE periodicexpenselist SET transactiontitle = $1, transactioncurrency = $2, expensecost = $3, expensetype = $4, interval = $5 WHERE userid = $6 and expenseid = $7;', [obj.title, obj.currency, obj.amount, obj.category, obj.interval, obj.onlineSwitch, userid, periodicid], (err, results) => {
+    if (err) {
+      var message = `Error! Expense not edited successfully.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    var output = `Expense edited.`;
+    response.status(200);
+    response.json({ success, output });
+  })
+}
+
 // adding new records to expenselist 
 const createExpense = (request, response) => {
   const token = request.get("authorization");
@@ -184,8 +244,8 @@ const createPeriodicExpense = (request, response) => {
 
       expense_id = results.rows[0].expenseid;
 
-      client.query('INSERT INTO periodicexpenselist (userid, periodicid, transactiontitle, lasttransdate, transactioncurrency, expensecost, expensetype) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING periodicid',
-        [userid, expense_id, obj.title, obj.date, obj.currency, obj.amount, obj.category], (err, results) => {
+      client.query('INSERT INTO periodicexpenselist (userid, periodicid, transactiontitle, lasttransdate, transactioncurrency, expensecost, expensetype, interval) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING periodicid',
+        [userid, expense_id, obj.title, obj.date, obj.currency, obj.amount, obj.category, obj.interval], (err, results) => {
           if (err) {
             console.log(err);
             var message = `Error while posting expense`;
@@ -201,7 +261,28 @@ const createPeriodicExpense = (request, response) => {
     })
 }
 
-// deleting records from expenselist 
+// deleting records from periodicexpenselist 
+const deletePeriodicExpense = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+  const periodicid = request.params.periodicid;
+
+  client.query('DELETE FROM periodicexpenselist WHERE (periodicid = $1 and userid = $2)',
+    [periodicid, userid], (err, results) => {
+      if (err) {
+        var message = `Error! Periodic expense not deleted.`;
+        response.status(400);
+        response.json({ message });
+      }
+      var success = '1';
+      var output = `Periodic expense deleted.`;
+      response.status(200);
+      response.json({ success, output });
+    })
+}
+
+
+// deleting records from periodicexpenselist 
 const deleteExpense = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
@@ -221,4 +302,25 @@ const deleteExpense = (request, response) => {
     })
 }
 
-module.exports = { getExpensesByUser, getExpensesByUserPerWeek, getExpensesByUserPerMonth, getExpensesByUserPerYear, createExpense, createPeriodicExpense, deleteExpense, periodicExpenseTrigger }
+
+// updating records from expenselist 
+const editExpense = (request, response) => {
+  const token = request.get("authorization");
+  const userid = tokenDecode(token).result.userid;
+  const expenseid = request.params.expenseid;
+  obj = request.body;  // variable obj is initialised as the JSON body of the POST request
+
+  client.query('UPDATE expenselist SET "expenseType"= $1, "expenseCost"= $2, "transactionPlace"= $3, "transactionDate"= $4, "transactionCurrency"= $5, "transactionTitle"= $6, "transactionOnline"= $7 WHERE userid = $8 and expenseid = $9;', [obj.category, obj.amount, obj.cashCard, obj.date, obj.currency, obj.title, obj.onlineSwitch, userid, expenseid], (err, results) => {
+    if (err) {
+      var message = `Error! Expense not edited successfully.`;
+      response.status(400);
+      response.json({ message });
+    }
+    var success = '1';
+    var output = `Expense edited.`;
+    response.status(200);
+    response.json({ success, output });
+  })
+}
+
+module.exports = { getExpensesByUser, getExpensesByUserPerWeek, getExpensesByUserPerMonth, getExpensesByUserPerYear, createExpense, createPeriodicExpense, deleteExpense, periodicExpenseTrigger, editExpense, editPeriodicExpense, getPeriodicExpensesByUser, deletePeriodicExpense }

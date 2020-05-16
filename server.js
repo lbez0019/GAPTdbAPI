@@ -2,10 +2,12 @@
 
 const express = require ('express');
 const apiRouter = require('./server/routes');
+var helmet = require('helmet');
 var cors = require('cors');
 
 const app = express();
 
+app.use(helmet());
 app.use(cors());
 
 app.use (express.json()); // We will be using JSON bodies to POST/GET from our central database

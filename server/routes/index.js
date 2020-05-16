@@ -42,9 +42,16 @@ router.get('/expenses/w/', auth, dbExpenses.getExpensesByUserPerWeek);
 router.get('/expenses/m/', auth, dbExpenses.getExpensesByUserPerMonth); 
 router.get('/expenses/y/', auth, dbExpenses.getExpensesByUserPerYear); 
 router.post('/expenses', auth, dbExpenses.createExpense);
+router.delete('/expenses/del/:expenseid', auth, dbExpenses.deleteExpense);
+router.put('/expenses/edit/:expenseid', auth, dbExpenses.editExpense);
+
+router.get('/expenses/periodic', auth, dbExpenses.getPeriodicExpensesByUser);
 router.post('/expenses/periodic', auth, dbExpenses.createPeriodicExpense);
 router.put('/expenses/periodic', auth, dbExpenses.periodicExpenseTrigger);
-router.delete('/expenses/del/:expenseid', auth, dbExpenses.deleteExpense);
+router.put('/expenses/periodic/edit/:periodicid', auth, dbExpenses.editPeriodicExpense);
+router.delete('/expenses/periodic/del/:periodicid', auth, dbExpenses.deletePeriodicExpense);
+
+
 
 //preferenceslist requests
 router.get('/pref', auth, dbPreferences.getPreferencesByUser); 
