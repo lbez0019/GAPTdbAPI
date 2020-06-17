@@ -47,33 +47,53 @@ const periodicExpenseTrigger = (request, response) => {
       var trans_date = output[i].lasttransdate; //transaction date
       var new_trans_date = trans_date;
       var now = new Date(); //current date
-      var diff = Math.floor((now - trans_date) / (1000 * 60 * 60 * 24)); //difference between now and transaction date in DAYS
-      var no_of_expenses = Math.floor(diff / 30); //monthly expenses - we have to add one per month
+
+      console.log(new_trans_date);
 
       var j = 0
 
       var intervalArray = output[i].interval.split(" ");
 
+      
+      if (intervalArray[1].includes("month")) {
+        let years =  now.getFullYear() - trans_date.getFullYear();
+        var no_of_expense = (years * 12) + (now.getMonth() - trans_date.getMonth()) ;
+        var no_of_expenses = no_of_expense / parseInt(intervalArray[0]);
+      }
+      else if (intervalArray[1].includes("week")) {
+        var no_of_expense = Math.floor((now - trans_date) / (1000 * 60 * 60 * 24 * 7)); //difference between now and transaction date in WEEKS
+        var no_of_expenses = no_of_expense / parseInt(intervalArray[0]);
+      }
+      else if (intervalArray[1].includes("day")) {
+        var no_of_expense = Math.floor((now - trans_date) / (1000 * 60 * 60 * 24)); //difference between now and transaction date in DAYS
+        var no_of_expenses = no_of_expense / parseInt(intervalArray[0]);
+        console.log(no_of_expenses);
+      }
+      else if (intervalArray[1].includes("year")) {
+        var no_of_expense =  now.getFullYear() - trans_date.getFullYear();
+        var no_of_expenses = no_of_expense / parseInt(intervalArray[0]);
+      }
+
       for (j = 1; j <= no_of_expenses; j++) {
 
         if (intervalArray[1].includes("month")) {
           var x = intervalArray[0];
-          new_trans_date = (Date.parse(trans_date).add(x * j).month())
+          new_trans_date = (Date.parse(trans_date).add(x * j).month());
           //console.log(new_trans_date);
         }
         else if (intervalArray[1].includes("week")) {
           var x = intervalArray[0];
-          new_trans_date = (Date.parse(trans_date).add(x * j).week())
+          new_trans_date = (Date.parse(trans_date).add(x * j).week());
           //console.log(new_trans_date);
         }
         else if (intervalArray[1].includes("day")) {
           var x = intervalArray[0];
-          new_trans_date = (Date.parse(trans_date).add(x * j).day())
-          //console.log(new_trans_date);
+          new_trans_date = (Date.parse(trans_date).add(x * j).day());
+          console.log(x);
         }
         else if (intervalArray[1].includes("year")) {
           var x = intervalArray[0];
-          new_trans_date = (Date.parse(trans_date).add(x * j).year())
+          new_trans_date = (Date.parse(trans_date).add(x * j).year());
           //console.log(new_trans_date);
         }
 
@@ -116,8 +136,9 @@ const getExpensesByUser = (request, response) => {
       response.json({ message });
     }
     var success = '1';
+    var periodic = "no";
     output = results.rows;
-    response.status(200).json({ success, output });
+    response.status(200).json({ periodic, success, output });
   })
 }
 
@@ -133,8 +154,9 @@ const getExpensesByUserPerWeek = (request, response) => {
       response.json({ message });
     }
     var success = '1';
+    var periodic = "no";
     output = results.rows;
-    response.status(200).json({ success, output });
+    response.status(200).json({ periodic, success, output });
   })
 }
 
@@ -150,8 +172,9 @@ const getExpensesByUserPerMonth = (request, response) => {
       response.json({ message });
     }
     var success = '1';
+    var periodic = "no";
     output = results.rows;
-    response.status(200).json({ success, output });
+    response.status(200).json({ periodic, success, output });
   })
 }
 
@@ -167,8 +190,9 @@ const getExpensesByUserPerYear = (request, response) => {
       response.json({ message });
     }
     var success = '1';
+    var periodic = "no";
     output = results.rows;
-    response.status(200).json({ success, output });
+    response.status(200).json({ periodic, success, output });
   })
 }
 
@@ -177,15 +201,16 @@ const getPeriodicExpensesByUser = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query('SELECT periodicid, transactiontitle, transactioncurrency, expensecost, expensetype, interval FROM periodicexpenselist WHERE userid = $1 ORDER BY "transactionDate" DESC', [userid], (err, results) => {
+  client.query('SELECT periodicid, transactiontitle, transactioncurrency, CAST(lasttransdate as text), expensecost, expensetype, interval FROM periodicexpenselist WHERE userid = $1', [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get periodic transactions.`;
       response.status(400);
       response.json({ message });
     }
     var success = '1';
+    var periodic = "yes";
     output = results.rows;
-    response.status(200).json({ success, output });
+    response.status(200).json({ periodic, success, output });
   })
 }
 
@@ -196,9 +221,10 @@ const editPeriodicExpense = (request, response) => {
   const periodicid = request.params.periodicid;
   obj = request.body;  // variable obj is initialised as the JSON body of the POST request
 
-  client.query('UPDATE periodicexpenselist SET transactiontitle = $1, transactioncurrency = $2, expensecost = $3, expensetype = $4, interval = $5 WHERE userid = $6 and expenseid = $7;', [obj.title, obj.currency, obj.amount, obj.category, obj.interval, obj.onlineSwitch, userid, periodicid], (err, results) => {
+  client.query('UPDATE periodicexpenselist SET transactiontitle = $1, transactioncurrency = $2, expensecost = $3, expensetype = $4, interval = $5, lasttransdate = $6 WHERE userid = $7 and periodicid = $8;', [obj.title, obj.currency, obj.amount, obj.category, obj.interval, obj.date, userid, periodicid], (err, results) => {
     if (err) {
       var message = `Error! Expense not edited successfully.`;
+      console.log(err);
       response.status(400);
       response.json({ message });
     }

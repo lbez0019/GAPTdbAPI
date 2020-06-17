@@ -149,7 +149,7 @@ const performLogin = (request, response) => {
 
     const result = bcrypt.compareSync(obj.password, results.password);
     if (result) { //if email found and password inputted matches password in db
-      results.password = undefined;
+      results.password = undefined; //hiding password from token to not contain secret info
 
       const jsontoken = sign({ result: results }, process.env.JWT_KEY, {
         expiresIn: "1h"
