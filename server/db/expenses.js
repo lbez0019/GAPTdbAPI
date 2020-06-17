@@ -165,7 +165,7 @@ const getExpensesByUserPerMonth = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query("SELECT * FROM expenselist WHERE userid = $1 and \"transactionDate\" >= date_trunc('month', current_date - interval '1 month') and \"transactionDate\" <= (current_date) ORDER BY \"transactionDate\" DESC", [userid], (err, results) => {
+  client.query("SELECT * FROM expenselist WHERE userid = $1 and \"transactionDate\" >= date_trunc('month', current_date) and \"transactionDate\" <= (current_date) ORDER BY \"transactionDate\" DESC", [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
       response.status(400);
@@ -183,7 +183,7 @@ const getExpensesByUserPerYear = (request, response) => {
   const token = request.get("authorization");
   const userid = tokenDecode(token).result.userid;
 
-  client.query("SELECT * FROM expenselist WHERE userid = $1 and \"transactionDate\" >= date_trunc('year', current_date - interval '1 year') and \"transactionDate\" <= (current_date) ORDER BY \"transactionDate\" DESC", [userid], (err, results) => {
+  client.query("SELECT * FROM expenselist WHERE userid = $1 and \"transactionDate\" >= date_trunc('year', current_date) and \"transactionDate\" <= (current_date) ORDER BY \"transactionDate\" DESC", [userid], (err, results) => {
     if (err) {
       var message = `Error! Cannot get transactions.`;
       response.status(400);
