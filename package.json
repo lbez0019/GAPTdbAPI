@@ -15,7 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "atob": "^2.1.2",
-    "bcrypt": "^3.0.6",
+    "bcrypt": "^5.0.0",
     "bcrypt-nodejs": "0.0.3",
     "cors": "^2.8.5",
     "datejs": "^1.0.0-rc3",
